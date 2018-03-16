@@ -64,6 +64,13 @@ class Housing implements JsonSerializable
      */
     private $email;
 
+    /**
+     * @var string
+     * 
+     * @ORM\Column(name="token", type="string", length=255)
+     */
+    private $token;
+
 
     /**
      * Get id
@@ -217,6 +224,30 @@ class Housing implements JsonSerializable
     public function getEmail()
     {
         return $this->email;
+    }
+
+    /**
+     * Set token
+     *
+     * @param string $token
+     *
+     * @return Housing
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
+
+        return $this;
+    }
+
+    /**
+     * Get token
+     *
+     * @return string
+     */
+    public function getToken()
+    {
+        return $this->token;
     }
 
 

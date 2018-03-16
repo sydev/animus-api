@@ -113,12 +113,4 @@ class HousingController extends Controller
 
         return new JsonResponse(['deleted' => true]);
     }
-
-
-    /**
-     * @Route("/housing/{id}", methods={"OPTIONS"}, requirements={"id"="\d+"})
-     */
-    public function optionsAction() {
-        return new JsonResponse(['skip' => true]);
-    }
 }

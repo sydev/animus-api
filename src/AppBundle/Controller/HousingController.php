@@ -37,6 +37,7 @@ class HousingController extends Controller
         $housing->setCity($data->city);
         $housing->setCountry($data->country);
         $housing->setEmail($data->email);
+        $housing->setToken(bin2hex(random_bytes(18)));
 
         $entityManager->persist($housing);
         $entityManager->flush();
@@ -53,7 +54,7 @@ class HousingController extends Controller
 
         // Use mail() instead of SwiftMailer, because I couldn´t make it work locally
         // And I did not have the time to thoroughly debug there
-        $token      = bin2hex(random_bytes(78));
+        $token      = $housing->getToken();
         $id         = $housing->getId();
         $base_url   = $this->getParameter('frontend_url');
         $url        = "$base_url/housing/$id?token=$token";

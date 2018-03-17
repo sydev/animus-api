@@ -16,8 +16,9 @@ class HousingController extends Controller
      * @Route("/housings", methods={"GET"})
      */
     public function getHousingsAction(Request $request) {
+        $email      = $request->query->get('email');
         $repository = $this->getDoctrine()->getRepository(Housing::class);
-        $housings   = $repository->findAll();
+        $housings   = ($email !== null) ? $repository->findBy(['email' => filter_var($email, FILTER_VALIDATE_EMAIL)]) : $repository->findAll();
         $response   = new JsonResponse($housings);
         
         return $response;

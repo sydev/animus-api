@@ -59,7 +59,8 @@ class HousingController extends Controller
         $id         = $housing->getId();
         $base_url   = $this->getParameter('frontend_url');
         $url        = "$base_url/housing/$id?token=$token";
-        $sent       = mail($data->email, 'Animus App', $url, "From: info@animus.de\r\nReply-To: info@animus.de\r\n");
+        $message    = "Hallo,\n\nSie haben erfolgreich eine Wohnung eingetragen. Diese können sie jetzt unter diesem Link bearbeiten:\n\n$url";
+        $sent       = mail($data->email, 'Animus App', $message, "From: info@animus.de\r\nReply-To: info@animus.de\r\n");
 
         return new JsonResponse(['created' => true, 'housing' => $housing]);
     }

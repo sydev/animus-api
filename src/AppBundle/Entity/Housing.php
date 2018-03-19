@@ -60,6 +60,13 @@ class Housing implements JsonSerializable
     /**
      * @var string
      *
+     * @ORM\Column(name="images", type="array")
+     */
+    private $images;
+
+    /**
+     * @var string
+     *
      * @ORM\Column(name="email", type="string", length=255)
      */
     private $email;
@@ -262,5 +269,28 @@ class Housing implements JsonSerializable
         return $obj;
     }
 
-}
 
+    /**
+     * Set images
+     *
+     * @param array $images
+     *
+     * @return Housing
+     */
+    public function setImages($images)
+    {
+        $this->images = $images;
+
+        return $this;
+    }
+
+    /**
+     * Get images
+     *
+     * @return array
+     */
+    public function getImages()
+    {
+        return $this->images;
+    }
+}

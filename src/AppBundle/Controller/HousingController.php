@@ -16,12 +16,14 @@ class HousingController extends Controller
      * @Route("/housings", methods={"GET"})
      */
     public function getHousingsAction(Request $request) {
-        $email      = $request->query->get('email');
+        $limit  = $request->query->get('limit');
+        $offset = $request->query->get('offset');
+
         $repository = $this->getDoctrine()->getRepository(Housing::class);
-        $housings   = ($email !== null) ? $repository->findBy(['email' => filter_var($email, FILTER_VALIDATE_EMAIL)]) : $repository->findAll();
-        $response   = new JsonResponse($housings);
+        $total      = $repository->createQueryBuilder('h')->select('count(h.id)')->getQuery()->getSingleScalarResult();
+        $housings   = $repository->findBy([], [], intval($limit), intval($offset));
         
-        return $response;
+        return new JsonResponse($housings, 200, ['X-Total' => $total]);
     }
 
     /**

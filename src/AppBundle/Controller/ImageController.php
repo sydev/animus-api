@@ -37,7 +37,7 @@ class ImageController extends Controller
   public function addImageAction(Request $request) {
     $root       = dirname($this->container->get('kernel')->getRootDir());
     $uploadDir  = $root .'/web/uploads';
-    $uploadUrl  = $request->getSchemeAndHttpHost() .'/web/uploads';
+    $uploadUrl  = $request->getSchemeAndHttpHost() .'/uploads';
     $errors     = [];
     $images     = [];
     $em         = $this->getDoctrine()->getManager();

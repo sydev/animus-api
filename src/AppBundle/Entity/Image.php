@@ -2,7 +2,9 @@
 
 namespace AppBundle\Entity;
 
+use JsonSerializable;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Image
@@ -10,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(name="image")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\ImageRepository")
  */
-class Image
+class Image implements JsonSerializable
 {
     /**
      * @var int
@@ -24,6 +26,7 @@ class Image
     /**
      * @var string
      *
+     * @Assert\Url()
      * @ORM\Column(name="url", type="string", length=255, unique=true)
      */
     private $url;
@@ -31,6 +34,7 @@ class Image
     /**
      * @var string
      *
+     * @Assert\Type("string")
      * @ORM\Column(name="name", type="string")
      */
     private $name;
@@ -38,15 +42,23 @@ class Image
     /**
      * @var int
      *
+     * @Assert\GreaterThan(0)
      * @ORM\Column(name="size", type="bigint")
      */
     private $size;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="Housing", inversedBy="images", cascade={"all"})
+     */
+    private $housing;
+
+
+    
 
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
@@ -75,16 +87,6 @@ class Image
     public function getUrl()
     {
         return $this->url;
-    }
-
-    /**
-     * Expose this object
-     * 
-     * @return array
-     */
-    public function jsonSerialize() {
-        $obj = get_object_vars($this);
-        return $obj;
     }
 
     /**
@@ -133,5 +135,41 @@ class Image
     public function getSize()
     {
         return $this->size;
+    }
+
+    /**
+     * Set housing
+     *
+     * @param Housing $housing
+     *
+     * @return Image
+     */
+    public function setHousing(Housing $housing = null)
+    {
+        $this->housing = $housing;
+
+        return $this;
+    }
+
+    /**
+     * Get housing
+     *
+     * @return Housing
+     */
+    public function getHousing()
+    {
+        return $this->housing;
+    }
+
+
+    /**
+     * Expose this object
+     * 
+     * @return array
+     */
+    public function jsonSerialize() {
+        $obj = get_object_vars($this);
+        $obj['housing'] = $obj['housing']->getId();
+        return $obj;
     }
 }

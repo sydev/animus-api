@@ -102,16 +102,27 @@ class HousingController extends Controller
     }
 
     /**
-     * @Route("/housing/{id}", methods={"PUT"}, requirements={"id"="\d+"})
+     * @Route("/housing/{id}", methods={"POST"}, requirements={"id"="\d+"})
      */
     public function updateHousingAction(Request $request, $id) {
-        $entityManager  = $this->getDoctrine()->getManager();
-        $repository     = $this->getDoctrine()->getRepository(Housing::class);
-        $housing        = $repository->findOneById($id);
+        try {
+            $new_images = $this->handleFileUpload($request);
+
+            // Throw any error occurred while file upload
+            foreach ($new_images as $image) {
+                if ($image instanceof Error) throw $image;
+            }
+        } catch (Exception $e) {
+            return new JsonResponse($e->getMessage(), $e->getCode());
+        }
+
+        $em         = $this->getDoctrine()->getManager();
+        $repository = $this->getDoctrine()->getRepository(Housing::class);
+        $housing    = $repository->findOneById($id);
 
         if (!$housing) throw $this->createNotFoundException("No housing found for id `$id`");
 
-        $data = (object) json_decode($request->getContent());
+        $data = (object) $request->request->all();
 
         $housing->setEnterDate(new \DateTime($data->enterDate));
         $housing->setStreet($data->street);
@@ -120,7 +131,19 @@ class HousingController extends Controller
         $housing->setCountry($data->country);
         $housing->setEmail($data->email);
 
-        $entityManager->flush();
+        // Remove images which aren´t represented in `keep_images`
+        $keep_images = array_map(function($id) { return intval($id); }, $data->keep_images);
+        $current_images = $housing->getImages()->toArray();
+
+        foreach ($current_images as $image) {
+            if (!in_array($image->getId(), $keep_images)) $housing->removeImage($image);
+        }
+
+        // Add new images
+        foreach ($new_images as $image) $housing->addImage($image);
+
+        // Update tables
+        $em->flush();
 
         return new JsonResponse(['updated' => true, 'housing' => $housing]);
     }
@@ -153,11 +176,11 @@ class HousingController extends Controller
      */
     private function handleFileUpload(Request $request) {
         $files = $request->files->get('images');
-        if (!$files) throw new Exception('`images` is required', 422);
+        if (!$files) return [];
 
         $root       = dirname($this->container->get('kernel')->getRootDir());
         $uploadDir  = $root .'/web/uploads';
-        $uploadUrl  = $request->getSchemeAndHttpHost() .'/web/uploads';
+        $uploadUrl  = $request->getSchemeAndHttpHost() .'/uploads';
         $errors     = [];
         $images     = [];
         $em         = $this->getDoctrine()->getManager();

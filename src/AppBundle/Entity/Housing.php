@@ -4,6 +4,9 @@ namespace AppBundle\Entity;
 
 use JsonSerializable;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
+use DateTime;
 
 /**
  * Housing
@@ -23,8 +26,11 @@ class Housing implements JsonSerializable
     private $id;
 
     /**
-     * @var \DateTime
+     * @var DateTime
      *
+     * @Assert\DateTime()
+     * @Assert\NotBlank()
+     * @Assert\NotNull()
      * @ORM\Column(name="enterDate", type="datetime")
      */
     private $enterDate;
@@ -32,6 +38,9 @@ class Housing implements JsonSerializable
     /**
      * @var string
      *
+     * @Assert\Type("string")
+     * @Assert\NotBlank()
+     * @Assert\NotNull()
      * @ORM\Column(name="street", type="string", length=255)
      */
     private $street;
@@ -39,6 +48,9 @@ class Housing implements JsonSerializable
     /**
      * @var string
      *
+     * @Assert\Type("numeric")
+     * @Assert\NotBlank()
+     * @Assert\NotNull()
      * @ORM\Column(name="zipCode", type="string", length=10)
      */
     private $zipCode;
@@ -46,6 +58,9 @@ class Housing implements JsonSerializable
     /**
      * @var string
      *
+     * @Assert\Type("string")
+     * @Assert\NotBlank()
+     * @Assert\NotNull()
      * @ORM\Column(name="city", type="string", length=255)
      */
     private $city;
@@ -53,20 +68,24 @@ class Housing implements JsonSerializable
     /**
      * @var string
      *
+     * @Assert\Type("string")
+     * @Assert\NotBlank()
+     * @Assert\NotNull()
      * @ORM\Column(name="country", type="string", length=255)
      */
     private $country;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="images", type="array")
+     * @ORM\OneToMany(targetEntity="Image", mappedBy="housing", cascade={"all"})
      */
     private $images;
 
     /**
      * @var string
      *
+     * @Assert\Email()
+     * @Assert\NotBlank()
+     * @Assert\NotNull()
      * @ORM\Column(name="email", type="string", length=255)
      */
     private $email;
@@ -74,15 +93,25 @@ class Housing implements JsonSerializable
     /**
      * @var string
      * 
+     * @Assert\Type("string")
+     * @Assert\NotBlank()
+     * @Assert\NotNull()
      * @ORM\Column(name="token", type="string", length=255)
      */
     private $token;
 
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->images = new \Doctrine\Common\Collections\ArrayCollection();
+    }
 
     /**
      * Get id
      *
-     * @return int
+     * @return integer
      */
     public function getId()
     {
@@ -257,6 +286,45 @@ class Housing implements JsonSerializable
         return $this->token;
     }
 
+    /**
+     * Add image
+     *
+     * @param \AppBundle\Entity\Image $image
+     *
+     * @return Housing
+     */
+    public function addImage(\AppBundle\Entity\Image $image)
+    {
+        $this->images[] = $image;
+        $image->setHousing($this);
+
+        return $this;
+    }
+
+    /**
+     * Remove image
+     *
+     * @param \AppBundle\Entity\Image $image
+     */
+    public function removeImage(\AppBundle\Entity\Image $image)
+    {
+        $this->images->removeElement($image);
+        $image->setHousing(null);
+    }
+
+    /**
+     * Get images
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getImages()
+    {
+        return $this->images;
+    }
+
+
+
+
 
     /**
      * Expose this object
@@ -266,31 +334,7 @@ class Housing implements JsonSerializable
     public function jsonSerialize() {
         $obj = get_object_vars($this);
         $obj['enterDate'] = $this->enterDate->getTimestamp();
+        $obj['images'] = $this->getImages()->toArray();
         return $obj;
-    }
-
-
-    /**
-     * Set images
-     *
-     * @param array $images
-     *
-     * @return Housing
-     */
-    public function setImages($images)
-    {
-        $this->images = $images;
-
-        return $this;
-    }
-
-    /**
-     * Get images
-     *
-     * @return array
-     */
-    public function getImages()
-    {
-        return $this->images;
     }
 }

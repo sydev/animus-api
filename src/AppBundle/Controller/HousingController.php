@@ -3,11 +3,21 @@
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\Housing;
+use AppBundle\Entity\Image;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\FileBag;
+use Symfony\Component\Config\Definition\Exception\Exception;
 use Doctrine\ORM\EntityManagerInterface;
+
+use DateTime;
+
+use Swift_Mailer;
+use Swift_Plugins_Loggers_ArrayLogger;
+use Swift_Plugins_LoggerPlugin;
+
 
 class HousingController extends Controller
 {
@@ -28,44 +38,53 @@ class HousingController extends Controller
     /**
      * @Route("/housing", methods={"POST"})
      */
-    public function addHousingAction(Request $request /*, \Swift_Mailer $mailer*/) {
-        $data           = (object) json_decode($request->getContent(), true);
-        $entityManager  = $this->getDoctrine()->getManager();
+    public function addHousingAction(Request $request, Swift_Mailer $mailer) {
+        try {
+            $images = $this->handleFileUpload($request);
 
-        $housing = new Housing();
-        $housing->setEnterDate(new \DateTime($data->enterDate));
-        $housing->setStreet($data->street);
-        $housing->setZipCode($data->zipCode);
-        $housing->setCity($data->city);
-        $housing->setCountry($data->country);
-        $housing->setImages($data->images);
-        $housing->setEmail($data->email);
+            // Throw any error occurred while file upload
+            foreach ($images as $image) {
+                if ($image instanceof Error) throw $image;
+            }
+        } catch (Exception $e) {
+            return new JsonResponse($e->getMessage(), $e->getCode());
+        }
+
+        $em         = $this->getDoctrine()->getManager();
+        $email      = $request->request->get('email');
+        $housing    = new Housing();
+
+        $housing->setEnterDate(new DateTime($request->request->get('enterDate')));
+        $housing->setStreet($request->request->get('street'));
+        $housing->setZipCode($request->request->get('zipCode'));
+        $housing->setCity($request->request->get('city'));
+        $housing->setCountry($request->request->get('country'));
+        $housing->setEmail($email);
         $housing->setToken(bin2hex(random_bytes(18)));
 
-        $entityManager->persist($housing);
-        $entityManager->flush();
+        foreach ($images as $image) $housing->addImage($image);
 
-        /*$mailLogger = new \Swift_Plugins_Loggers_ArrayLogger();
-        $mailer->registerPlugin(new \Swift_Plugins_LoggerPlugin($mailLogger));
+        $validator  = $this->get('validator');
+        $errors     = $validator->validate($housing);
+        if (count($errors) > 0) return new JsonResponse(['param' => $errors[0]->getPropertyPath(), 'message' => $errors[0]->getMessage()], 422);
 
-        $message = (new \Swift_Message('HELLO'))
-            ->setFrom('info@animus.de')
-            ->setTo($data->email)
-            ->setBody('Test', 'text/plain');
+        $em->persist($housing);
+        $em->flush();
 
-        $sent = $mailer->send($message);*/
+        // Send mail
+        $mailLogger = new Swift_Plugins_Loggers_ArrayLogger();
+        $mailer->registerPlugin(new Swift_Plugins_LoggerPlugin($mailLogger));
 
-        // Use mail() instead of SwiftMailer, because I couldn´t make it work locally
-        // And I did not have the time to thoroughly debug there
         $token      = $housing->getToken();
         $id         = $housing->getId();
         $base_url   = $this->getParameter('frontend_url');
         $url        = "$base_url/housing/$id?token=$token";
-        $message    = "Hallo,\n\nSie haben erfolgreich eine Wohnung eingetragen. Diese können sie jetzt unter diesem Link bearbeiten:\n\n$url";
+        $message    = (new \Swift_Message('Wohnung erstellt'))
+            ->setFrom('info@sydev.de')
+            ->setTo($email)
+            ->setBody("Hallo,\n\nDu hast erfolgreich eine Wohnung eingetragen. Diese kannst du jetzt unter diesem Link bearbeiten:\n\n$url", 'text/plain');
 
-        try {
-            $sent = mail($data->email, 'Animus App', $message, "From: info@sydev.de\r\nReply-To: info@sydev.de\r\n");
-        } catch (\Symfony\Component\Debug\Exception\ContextErrorException $e) {}
+        $mailer->send($message);
 
         return new JsonResponse(['created' => true, 'housing' => $housing]);
     }
@@ -120,5 +139,62 @@ class HousingController extends Controller
         $entityManager->flush();
 
         return new JsonResponse(['deleted' => true]);
+    }
+
+
+
+
+
+    /**
+     * Handle uploaded files
+     *
+     * @param FileBag $files
+     * @return Image[]|Error[]
+     */
+    private function handleFileUpload(Request $request) {
+        $files = $request->files->get('images');
+        if (!$files) throw new Exception('`images` is required', 422);
+
+        $root       = dirname($this->container->get('kernel')->getRootDir());
+        $uploadDir  = $root .'/web/uploads';
+        $uploadUrl  = $request->getSchemeAndHttpHost() .'/web/uploads';
+        $errors     = [];
+        $images     = [];
+        $em         = $this->getDoctrine()->getManager();
+
+        foreach ($files as $file) {
+            // Check if $file is valid
+            if (!$file->isValid()) {
+                $errors[] = $file->getError();
+                continue;
+            }
+      
+            // Check if $file is an image
+            $mimeType = $file->getClientMimeType();
+            $fileType = explode('/', $mimeType)[0];
+
+            if ($fileType !== 'image') {
+                $errors[] = new Error('File must be an image', 422);
+                continue;
+            }
+
+            // Move uploaded file from temp dir to $uploadDir
+            $fileName = explode('.', $file->getClientOriginalName())[0] .'_'. time() .'.'. $file->getClientOriginalExtension();
+            $file->move($uploadDir, $fileName);
+      
+            // Create the file url
+            $fileUrl  = $uploadUrl .'/'. $fileName;
+
+            // Initialize a new Image and set the properties
+            $image = new Image();
+            $image->setUrl($fileUrl);
+            $image->setName($fileName);
+            $image->setSize($file->getClientSize());
+      
+            $images[] = $image;
+          }
+           
+          // Return the images if there are no errors
+          return (empty($errors)) ? $images : $errors;
     }
 }

@@ -15,8 +15,8 @@ class HousingController extends Controller
      * @Route("/housings", methods={"GET"})
      */
     public function getHousingsAction(Request $request) {
-        $limit  = $request->query->get('limit');
-        $offset = $request->query->get('offset');
+        $limit  = $request->query->get('limit', 10);
+        $offset = $request->query->get('offset', 0);
 
         $repository = $this->getDoctrine()->getRepository(Housing::class);
         $total      = $repository->createQueryBuilder('h')->select('count(h.id)')->getQuery()->getSingleScalarResult();
@@ -38,6 +38,7 @@ class HousingController extends Controller
         $housing->setZipCode($data->zipCode);
         $housing->setCity($data->city);
         $housing->setCountry($data->country);
+        $housing->setImages($data->images);
         $housing->setEmail($data->email);
         $housing->setToken(bin2hex(random_bytes(18)));
 
@@ -61,7 +62,10 @@ class HousingController extends Controller
         $base_url   = $this->getParameter('frontend_url');
         $url        = "$base_url/housing/$id?token=$token";
         $message    = "Hallo,\n\nSie haben erfolgreich eine Wohnung eingetragen. Diese können sie jetzt unter diesem Link bearbeiten:\n\n$url";
-        $sent       = mail($data->email, 'Animus App', $message, "From: info@sydev.de\r\nReply-To: info@sydev.de\r\n");
+
+        try {
+            $sent = mail($data->email, 'Animus App', $message, "From: info@sydev.de\r\nReply-To: info@sydev.de\r\n");
+        } catch (\Symfony\Component\Debug\Exception\ContextErrorException $e) {}
 
         return new JsonResponse(['created' => true, 'housing' => $housing]);
     }

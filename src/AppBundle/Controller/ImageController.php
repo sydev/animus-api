@@ -51,13 +51,15 @@ class ImageController extends Controller
       $fileType = explode('/', $mimeType)[0];
       if ($fileType !== 'image') $errors[] = ['error' => 'File must be an image', 'code' => 422];
 
-      $fileName = time() .'.'. $file->getClientOriginalExtension();
+      $fileName = explode('.', $file->getClientOriginalName())[0] .'_'. time() .'.'. $file->getClientOriginalExtension();
       $file->move($uploadDir, $fileName);
 
       $fileUrl  = $uploadUrl .'/'. $fileName;
       $image    = new Image();
 
       $image->setUrl($fileUrl);
+      $image->setName($file->getClientOriginalName());
+      $image->setSize($file->getClientSize());
 
       $em->persist($image);
       $em->flush();

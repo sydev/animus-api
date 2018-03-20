@@ -28,6 +28,20 @@ class Image
      */
     private $url;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="name", type="string")
+     */
+    private $name;
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="size", type="bigint")
+     */
+    private $size;
+
 
     /**
      * Get id
@@ -72,5 +86,52 @@ class Image
         $obj = get_object_vars($this);
         return $obj;
     }
-}
 
+    /**
+     * Set name
+     *
+     * @param string $name
+     *
+     * @return Image
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Get name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set size
+     *
+     * @param integer $size
+     *
+     * @return Image
+     */
+    public function setSize($size)
+    {
+        $this->size = $size;
+
+        return $this;
+    }
+
+    /**
+     * Get size
+     *
+     * @return integer
+     */
+    public function getSize()
+    {
+        return $this->size;
+    }
+}

@@ -218,6 +218,8 @@ class HousingController extends Controller
       
             $images[] = $image;
           }
+
+          error_log((string) $errors);
            
           // Return the images if there are no errors
           return (empty($errors)) ? $images : $errors;

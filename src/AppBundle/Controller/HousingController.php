@@ -38,12 +38,8 @@ class HousingController extends Controller
      * @Route("/housing", methods={"POST"})
      */
     public function addHousingAction(Request $request) {
-        return new \Symfony\Component\BrowserKit\Response(phpinfo()); die;
-        $images = $this->handleFileUpload($request);
-        var_dump($images); die;
-
         try {
-            
+            $images = $this->handleFileUpload($request);
 
             // Throw any error occurred while file upload
             foreach ($images as $image) {
@@ -194,7 +190,6 @@ class HousingController extends Controller
         foreach ($files as $file) {
             // Check if $file is valid
             if (!$file->isValid()) {
-                return $file->getErrorMessage();
                 $errors[] = $file->getError();
                 continue;
             }
@@ -222,11 +217,9 @@ class HousingController extends Controller
             $image->setSize($file->getClientSize());
       
             $images[] = $image;
-        }
-
-        return $images;
+          }
            
-        // Return the images if there are no errors
-        //return (empty($errors)) ? $images : $errors;
+          // Return the images if there are no errors
+          return (empty($errors)) ? $images : $errors;
     }
 }

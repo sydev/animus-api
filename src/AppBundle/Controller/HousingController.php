@@ -40,7 +40,7 @@ class HousingController extends Controller
     public function addHousingAction(Request $request) {
         $images = $this->handleFileUpload($request);
         var_dump($images); die;
-        
+
         try {
             
 
@@ -220,9 +220,11 @@ class HousingController extends Controller
             $image->setSize($file->getClientSize());
       
             $images[] = $image;
-          }
+        }
+
+        return $images;
            
-          // Return the images if there are no errors
-          return (empty($errors)) ? $images : $errors;
+        // Return the images if there are no errors
+        //return (empty($errors)) ? $images : $errors;
     }
 }

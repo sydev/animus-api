@@ -38,7 +38,7 @@ class HousingController extends Controller
     /**
      * @Route("/housing", methods={"POST"})
      */
-    public function addHousingAction(Request $request, Swift_Mailer $mailer) {
+    public function addHousingAction(Request $request, Swift_Mailer $mailer = null) {
         try {
             $images = $this->handleFileUpload($request);
 
@@ -71,6 +71,8 @@ class HousingController extends Controller
         $em->persist($housing);
         $em->flush();
 
+        if ($mailer === null) return new JsonResponse(['error' => 'Housing created, but no mail is sent']);
+        
         // Send mail
         $mailLogger = new Swift_Plugins_Loggers_ArrayLogger();
         $mailer->registerPlugin(new Swift_Plugins_LoggerPlugin($mailLogger));

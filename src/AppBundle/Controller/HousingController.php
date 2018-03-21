@@ -40,6 +40,11 @@ class HousingController extends Controller
     public function addHousingAction(Request $request) {
         try {
             $images = $this->handleFileUpload($request);
+
+            // Throw any error occurred while file upload
+            foreach ($images as $image) {
+                if ($image instanceof Error) throw $image;
+            }
         } catch (Exception $e) {
             return new JsonResponse($e->getMessage(), $e->getCode());
         }
@@ -178,18 +183,25 @@ class HousingController extends Controller
         $root       = dirname($this->container->get('kernel')->getRootDir());
         $uploadDir  = $root .'/web/uploads';
         $uploadUrl  = $request->getSchemeAndHttpHost() .'/uploads';
+        $errors     = [];
         $images     = [];
         $em         = $this->getDoctrine()->getManager();
 
         foreach ($files as $file) {
             // Check if $file is valid
-            if (!$file->isValid()) continue;
+            if (!$file->isValid()) {
+                $errors[] = $file->getError();
+                continue;
+            }
       
             // Check if $file is an image
             $mimeType = $file->getClientMimeType();
             $fileType = explode('/', $mimeType)[0];
 
-            if ($fileType !== 'image') continue;
+            if ($fileType !== 'image') {
+                $errors[] = new Error('File must be an image', 422);
+                continue;
+            }
 
             // Move uploaded file from temp dir to $uploadDir
             $fileName = explode('.', $file->getClientOriginalName())[0] .'_'. time() .'.'. $file->getClientOriginalExtension();
@@ -205,9 +217,9 @@ class HousingController extends Controller
             $image->setSize($file->getClientSize());
       
             $images[] = $image;
-        }
+          }
            
-        // Return the images if there are no errors
-        return $images;
+          // Return the images if there are no errors
+          return (empty($errors)) ? $images : $errors;
     }
 }

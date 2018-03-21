@@ -38,6 +38,7 @@ class HousingController extends Controller
      * @Route("/housing", methods={"POST"})
      */
     public function addHousingAction(Request $request) {
+        phpinfo(); die;
         $images = $this->handleFileUpload($request);
         var_dump($images); die;
 

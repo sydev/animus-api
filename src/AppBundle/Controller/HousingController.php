@@ -38,7 +38,7 @@ class HousingController extends Controller
      * @Route("/housing", methods={"POST"})
      */
     public function addHousingAction(Request $request) {
-        phpinfo(); die;
+        return new \Symfony\Component\BrowserKit\Response(phpinfo()); die;
         $images = $this->handleFileUpload($request);
         var_dump($images); die;
 

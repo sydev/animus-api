@@ -132,7 +132,7 @@ class HousingController extends Controller
         $housing->setEmail($data->email);
 
         // Remove images which aren´t represented in `keep_images`
-        $keep_images = array_map(function($id) { return intval($id); }, $data->keep_images);
+        $keep_images    = (isset($data->keep_images)) ? array_map(function($id) { return intval($id); }, $data->keep_images) : [];
         $current_images = $housing->getImages()->toArray();
 
         foreach ($current_images as $image) {

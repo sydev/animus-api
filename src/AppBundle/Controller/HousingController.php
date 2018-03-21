@@ -193,6 +193,7 @@ class HousingController extends Controller
         foreach ($files as $file) {
             // Check if $file is valid
             if (!$file->isValid()) {
+                return $file->getError();
                 $errors[] = $file->getError();
                 continue;
             }

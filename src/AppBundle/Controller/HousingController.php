@@ -40,6 +40,7 @@ class HousingController extends Controller
     public function addHousingAction(Request $request) {
         try {
             $images = $this->handleFileUpload($request);
+            var_dump($images); die;
 
             // Throw any error occurred while file upload
             foreach ($images as $image) {
@@ -218,8 +219,6 @@ class HousingController extends Controller
       
             $images[] = $image;
           }
-
-          error_log((string) $errors);
            
           // Return the images if there are no errors
           return (empty($errors)) ? $images : $errors;
